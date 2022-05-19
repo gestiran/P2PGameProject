@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using P2PGameServerProject.Messages;
+using P2PGameServerProject.Data;
+using P2PGameServerProject.Data.Messages.Commands;
 using P2PGameServerProject.Messages.ServerMessages;
 using P2PGameServerProject.Rooms;
-using P2PGameServerProject.Users;
 
 namespace P2PGameServerProject.Handlers {
     public class ServerCommandsHandler {
-        private readonly Dictionary<UserIPKey, UserStatus> _users;
+        private readonly Dictionary<UserIP, UserStatus> _users;
         private readonly GameRoom[] _rooms;
         
         private readonly ServerResponseBuilder _serverResponseBuilder;
         
-        public ServerCommandsHandler(GameRoom[] rooms, Dictionary<UserIPKey, UserStatus> users) {
+        public ServerCommandsHandler(GameRoom[] rooms, Dictionary<UserIP, UserStatus> users) {
             _rooms = rooms;
             _users = users;
             _serverResponseBuilder = new ServerResponseBuilder();
@@ -34,12 +34,12 @@ namespace P2PGameServerProject.Handlers {
         }
 
         private bool AddMeToConnectedHandle(IPAddress address, out byte[] result) {
-            UserIPKey userKey = new UserIPKey(address);
-            if (_users.ContainsKey(userKey)) {
+            UserIP user = new UserIP(address);
+            if (_users.ContainsKey(user)) {
                 result = _serverResponseBuilder.AddMeToConnected(ActionResult.Failed);
                 Console.WriteLine($"[{address}] AddMeToConnected - Failed");
             } else {
-                _users.Add(userKey, UserStatus.Online);
+                _users.Add(user, UserStatus.Online);
                 result = _serverResponseBuilder.AddMeToConnected(ActionResult.Success);
                 Console.WriteLine($"[{address}] AddMeToConnected - Success");
             }
@@ -47,9 +47,9 @@ namespace P2PGameServerProject.Handlers {
         }
 
         private bool RemoveMeFromConnectedHandle(IPAddress address, out byte[] result) {
-            UserIPKey userKey = new UserIPKey(address);
-            if (_users.ContainsKey(userKey)) {
-                _users.Remove(userKey);
+            UserIP user = new UserIP(address);
+            if (_users.ContainsKey(user)) {
+                _users.Remove(user);
                 result = _serverResponseBuilder.RemoveMeFromConnected(ActionResult.Success);
                 Console.WriteLine($"[{address}] RemoveMeFromConnected - Success");
             } else {
@@ -60,9 +60,9 @@ namespace P2PGameServerProject.Handlers {
         }
 
         private bool SetStatusHandle(IPAddress address, byte[] data, out byte[] result) {
-            UserIPKey userKey = new UserIPKey(address);
-            if (_users.ContainsKey(userKey)) {
-                _users[userKey] = (UserStatus)data[1];
+            UserIP user = new UserIP(address);
+            if (_users.ContainsKey(user)) {
+                _users[user] = (UserStatus)data[1];
                 result = _serverResponseBuilder.SetStatus(ActionResult.Success);
                 Console.WriteLine($"[{address}] SetStatus - Success :: New status is {(UserStatus)data[1]}");
             } else {
@@ -73,8 +73,8 @@ namespace P2PGameServerProject.Handlers {
         }
 
         private bool GetFreeRoomHandle(IPAddress address, out byte[] result) {
-            UserIPKey userKey = new UserIPKey(address);
-            if (_users.ContainsKey(userKey)) {
+            UserIP user = new UserIP(address);
+            if (_users.ContainsKey(user)) {
                 int freeId = 0;
                 bool isFind = false;
 
@@ -100,8 +100,8 @@ namespace P2PGameServerProject.Handlers {
         }
 
         private bool CreateRoomHandle(IPAddress address, out byte[] result) {
-            UserIPKey userKey = new UserIPKey(address);
-            if (_users.ContainsKey(userKey)) {
+            UserIP user = new UserIP(address);
+            if (_users.ContainsKey(user)) {
                 int emptyRoom = 0;
                 bool isFind = false;
 
@@ -114,7 +114,7 @@ namespace P2PGameServerProject.Handlers {
 
                 if (isFind) {
                     _rooms[emptyRoom].status = RoomStatus.Lobby;
-                    _rooms[emptyRoom].host = userKey;
+                    _rooms[emptyRoom].host = user;
                     result = _serverResponseBuilder.CreateRoom(ActionResult.Success, emptyRoom);
                     Console.WriteLine($"[{address}] CreateRoom - Success :: Created room on {emptyRoom} id");
                 } else {
@@ -129,13 +129,13 @@ namespace P2PGameServerProject.Handlers {
         }
 
         private bool RemoveRoomHandle(IPAddress address, byte[] data, out byte[] result) {
-            UserIPKey userKey = new UserIPKey(address);
-            if (_users.ContainsKey(userKey)) {
+            UserIP user = new UserIP(address);
+            if (_users.ContainsKey(user)) {
                 int roomId = BitConverter.ToInt32(data, 1);
 
                 if (roomId < _rooms.Length) {
                     if (_rooms[roomId].status.Equals(RoomStatus.Lobby)) {
-                        if (_rooms[roomId].host.Equals(userKey)) {
+                        if (_rooms[roomId].host.Equals(user)) {
                             _rooms[roomId] = new GameRoom(RoomStatus.Empty);
                             result = _serverResponseBuilder.RemoveRoom(ActionResult.Success);
                             Console.WriteLine($"[{address}] RemoveRoom - Success :: Room on {roomId} is removed");

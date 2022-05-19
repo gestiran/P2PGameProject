@@ -1,13 +1,13 @@
 using System;
-using P2PGameServerProject.Users;
+using P2PGameServerProject.Data;
 #pragma warning disable 8610
 #pragma warning disable 8614
 
 namespace P2PGameServerProject.Rooms {
     public struct GameRoom : IEquatable<GameRoom> {
         public RoomStatus status;
-        public UserIPKey host;
-        public UserIPKey user;
+        public UserIP host;
+        public UserIP user;
 
         public GameRoom(RoomStatus status) {
             this.status = status;

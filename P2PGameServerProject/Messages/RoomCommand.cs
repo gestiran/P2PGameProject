@@ -1,9 +1,0 @@
-namespace P2PGameServerProject.Messages {
-    public enum RoomCommand : byte {
-        GetHostAddress = 0,
-        GetUsersAddresses = 1,
-        Disconnect = 2,
-        SetMeAtHost = 3,
-        SetOtherAtHost = 4
-    }
-}
